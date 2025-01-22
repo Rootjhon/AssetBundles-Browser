@@ -94,9 +94,8 @@ namespace AssetBundleBrowser
         internal void OnEnable(EditorWindow parent)
         {
             m_InspectTab = (parent as AssetBundleBrowserMain).m_InspectTab;
-
-            m_UserData.m_BuildTarget = (ValidBuildTarget)(int)EditorUserBuildSettings.activeBuildTarget;
-
+            m_UserData.m_BuildTarget = EditorUserBuildSettings.activeBuildTarget;
+            
             //LoadData...
             var dataPath = System.IO.Path.GetFullPath(".");
             dataPath = dataPath.Replace("\\", "/");
@@ -190,7 +189,7 @@ namespace AssetBundleBrowser
             // build target
             using (new EditorGUI.DisabledScope(!AssetBundleModel.Model.DataSource.CanSpecifyBuildTarget))
             {
-                ValidBuildTarget tgt = (ValidBuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_UserData.m_BuildTarget);
+                BuildTarget tgt = (BuildTarget)EditorGUILayout.EnumPopup(m_TargetContent, m_UserData.m_BuildTarget);
                 if (tgt != m_UserData.m_BuildTarget)
                 {
                     m_UserData.m_BuildTarget = tgt;
@@ -518,48 +517,11 @@ namespace AssetBundleBrowser
             //EditorUserBuildSettings.SetPlatformSettings(EditorUserBuildSettings.activeBuildTarget.ToString(), "AssetBundleOutputPath", m_OutputPath);
         }
 
-        //Note: this is the provided BuildTarget enum with some entries removed as they are invalid in the dropdown
-        internal enum ValidBuildTarget
-        {
-            //NoTarget = -2,        --doesn't make sense
-            //iPhone = -1,          --deprecated
-            //BB10 = -1,            --deprecated
-            //MetroPlayer = -1,     --deprecated
-            StandaloneOSXUniversal = 2,
-            StandaloneOSXIntel = 4,
-            StandaloneWindows = 5,
-            WebPlayer = 6,
-            WebPlayerStreamed = 7,
-            iOS = 9,
-            PS3 = 10,
-            XBOX360 = 11,
-            Android = 13,
-            StandaloneLinux = 17,
-            StandaloneWindows64 = 19,
-            WebGL = 20,
-            WSAPlayer = 21,
-            StandaloneLinux64 = 24,
-            StandaloneLinuxUniversal = 25,
-            WP8Player = 26,
-            StandaloneOSXIntel64 = 27,
-            BlackBerry = 28,
-            Tizen = 29,
-            PSP2 = 30,
-            PS4 = 31,
-            PSM = 32,
-            XboxOne = 33,
-            SamsungTV = 34,
-            N3DS = 35,
-            WiiU = 36,
-            tvOS = 37,
-            Switch = 38
-        }
-
         [System.Serializable]
         internal class BuildTabData
         {
             internal List<string> m_OnToggles;
-            internal ValidBuildTarget m_BuildTarget = ValidBuildTarget.StandaloneWindows;
+            internal BuildTarget m_BuildTarget = BuildTarget.StandaloneWindows;
             internal CompressOptions m_Compression = CompressOptions.ChunkBasedCompression;
             internal string m_OutputPath = string.Empty;
             internal bool m_UseDefaultPath = true;
