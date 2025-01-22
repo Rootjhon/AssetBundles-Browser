@@ -93,6 +93,17 @@ namespace AssetBundleBrowser
             EditorUtility.RevealInFinder(tempPath);
         }
 
+        private void ExportAssetToDisk(object varID)
+        {
+            var tempTreeItem = FindItem((int)varID, rootItem);
+            var tempPath = ((TreeViewItem)tempTreeItem).displayName;
+            if (tempTreeItem is InspectTreeItem)
+            {
+                tempPath = ((InspectTreeItem)tempTreeItem).bundlePath;
+            }
+
+        }
+
         protected override void RowGUI(RowGUIArgs args)
         {
             base.RowGUI(args);

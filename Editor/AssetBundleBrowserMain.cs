@@ -1,15 +1,24 @@
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using System.Reflection;
+using System.Collections.Generic;
 
-[assembly: System.Runtime.CompilerServices.InternalsVisibleToAttribute("Unity.AssetBundleBrowser.Editor.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Unity.AssetBundleBrowser.Editor.Tests")]
 
 namespace AssetBundleBrowser
 {
-
     public class AssetBundleBrowserMain : EditorWindow, IHasCustomMenu, ISerializationCallbackReceiver
     {
+        #region [Enum]
+        enum Mode
+        {
+            Browser,
+            Builder,
+            Inspect,
+        }
+        #endregion
 
+        #region [Fields]
         private static AssetBundleBrowserMain s_instance = null;
         internal static AssetBundleBrowserMain instance
         {
@@ -21,34 +30,33 @@ namespace AssetBundleBrowser
             }
         }
 
-        internal const float kButtonWidth = 150;
-
-        enum Mode
-        {
-            Browser,
-            Builder,
-            Inspect,
-        }
+        #region [SerializeField]
         [SerializeField]
         Mode m_Mode;
-
         [SerializeField]
         int m_DataSourceIndex;
+        [SerializeField]
+        internal bool multiDataSource = false;
 
         [SerializeField]
         internal AssetBundleManageTab m_ManageTab;
-
         [SerializeField]
         internal AssetBundleBuildTab m_BuildTab;
-
         [SerializeField]
         internal AssetBundleInspectTab m_InspectTab;
+        #endregion
 
         private Texture2D m_RefreshTexture;
+        private List<AssetBundleDataSource.ABDataSource> m_DataSourceList = null;
+        private string[] _Tooglelabels = new string[3] { "Configure", "Build", "Inspect" };
 
-        const float k_ToolbarPadding = 15;
-        const float k_MenubarPadding = 32;
+        internal const float kButtonWidth = 150;
 
+        private const float k_ToolbarPadding = 15;
+        private const float k_MenubarPadding = 32;
+        #endregion
+
+        #region [MenuItem]
         [MenuItem("Window/AssetBundle Browser/Browser #B", priority = 2050)]
         static void ShowWindow()
         {
@@ -56,34 +64,20 @@ namespace AssetBundleBrowser
             instance.titleContent = new GUIContent("AssetBundles");
             instance.Show();
         }
+        #endregion
 
-        [MenuItem("Test/Ts")]
-        public static void TestBtn()
-        {
-            var tempABs = AssetDatabase.GetAllAssetBundleNames();
-            foreach (var item in tempABs)
-            {
-                Debug.LogError(string.Join("|", AssetDatabase.GetDependencies(AssetDatabase.GetAssetPathsFromAssetBundle(item), false)));
-            }
-            
-        }
-
-        [SerializeField]
-        internal bool multiDataSource = false;
-        List<AssetBundleDataSource.ABDataSource> m_DataSourceList = null;
+        #region [IHasCustomMenu]
         public virtual void AddItemsToMenu(GenericMenu menu)
         {
-            if (menu != null)
-                menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
+            if (menu == null) return;
+            menu.AddItem(new GUIContent("Custom Sources"), multiDataSource, FlipDataSource);
         }
-        internal void FlipDataSource()
-        {
-            multiDataSource = !multiDataSource;
-        }
+        internal void FlipDataSource() { multiDataSource = !multiDataSource; }
+        #endregion
 
+        #region [GUI]
         private void OnEnable()
         {
-
             Rect subPos = GetSubWindowArea();
             if (m_ManageTab == null)
                 m_ManageTab = new AssetBundleManageTab();
@@ -95,27 +89,10 @@ namespace AssetBundleBrowser
                 m_InspectTab = new AssetBundleInspectTab();
             m_InspectTab.OnEnable(subPos);
 
-            m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
+            if (m_RefreshTexture == null)
+                m_RefreshTexture = EditorGUIUtility.FindTexture("Refresh");
 
             InitDataSources();
-        }
-        private void InitDataSources()
-        {
-            //determine if we are "multi source" or not...
-            multiDataSource = false;
-            m_DataSourceList = new List<AssetBundleDataSource.ABDataSource>();
-            foreach (var info in AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes)
-            {
-                m_DataSourceList.AddRange(info.GetMethod("CreateDataSources").Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>);
-            }
-
-            if (m_DataSourceList.Count > 1)
-            {
-                multiDataSource = true;
-                if (m_DataSourceIndex >= m_DataSourceList.Count)
-                    m_DataSourceIndex = 0;
-                AssetBundleModel.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
-            }
         }
         private void OnDisable()
         {
@@ -124,38 +101,11 @@ namespace AssetBundleBrowser
             if (m_InspectTab != null)
                 m_InspectTab.OnDisable();
         }
-
-        public void OnBeforeSerialize()
-        {
-        }
-        public void OnAfterDeserialize()
-        {
-        }
-
-        private Rect GetSubWindowArea()
-        {
-            float padding = k_MenubarPadding;
-            if (multiDataSource)
-                padding += k_MenubarPadding * 0.5f;
-            Rect subPos = new Rect(0, padding, position.width, position.height - padding);
-            return subPos;
-        }
-
         private void Update()
         {
-            switch (m_Mode)
-            {
-                case Mode.Builder:
-                    break;
-                case Mode.Inspect:
-                    break;
-                case Mode.Browser:
-                default:
-                    m_ManageTab.Update();
-                    break;
-            }
+            if (m_Mode != Mode.Browser) return;
+            m_ManageTab.Update();
         }
-
         private void OnGUI()
         {
             ModeToggle();
@@ -174,8 +124,37 @@ namespace AssetBundleBrowser
                     break;
             }
         }
+        #endregion
 
-        void ModeToggle()
+        #region [Business]
+        private void InitDataSources()
+        {
+            //determine if we are "multi source" or not...
+            multiDataSource = false;
+            m_DataSourceList = new List<AssetBundleDataSource.ABDataSource>();
+            var tempSourceTypes = AssetBundleDataSource.ABDataSourceProviderUtility.CustomABDataSourceTypes;
+            foreach (var info in tempSourceTypes)
+            {
+                m_DataSourceList.AddRange(info.GetMethod("CreateDataSources", BindingFlags.Public | BindingFlags.Static).Invoke(null, null) as List<AssetBundleDataSource.ABDataSource>);
+            }
+
+            if (m_DataSourceList.Count > 1)
+            {
+                multiDataSource = true;
+                if (m_DataSourceIndex >= m_DataSourceList.Count)
+                    m_DataSourceIndex = 0;
+                AssetBundleModel.Model.DataSource = m_DataSourceList[m_DataSourceIndex];
+            }
+        }
+        private Rect GetSubWindowArea()
+        {
+            float padding = k_MenubarPadding;
+            if (multiDataSource) padding += k_MenubarPadding * 0.5f;
+
+            var subPos = new Rect(0, padding, position.width, position.height - padding);
+            return subPos;
+        }
+        private void ModeToggle()
         {
             GUILayout.BeginHorizontal();
             GUILayout.Space(k_ToolbarPadding);
@@ -198,9 +177,7 @@ namespace AssetBundleBrowser
             }
 
             float toolbarWidth = position.width - k_ToolbarPadding * 4 - m_RefreshTexture.width;
-            //string[] labels = new string[2] { "Configure", "Build"};
-            string[] labels = new string[3] { "Configure", "Build", "Inspect" };
-            m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, labels, "LargeButton", GUILayout.Width(toolbarWidth));
+            m_Mode = (Mode)GUILayout.Toolbar((int)m_Mode, _Tooglelabels, "LargeButton", GUILayout.Width(toolbarWidth));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             if (multiDataSource)
@@ -256,7 +233,11 @@ namespace AssetBundleBrowser
                 //GUILayout.EndArea();
             }
         }
+        #endregion
 
-
+        #region [ISerializationCallbackReceiver]
+        public void OnBeforeSerialize() { }
+        public void OnAfterDeserialize() { }
+        #endregion
     }
 }

@@ -2,8 +2,8 @@
 using System.IO;
 using UnityEngine;
 using UnityEditor;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
 
 using URandom = UnityEngine.Random;
@@ -74,12 +74,62 @@ namespace AssetBundleBrowser.AssetBundleModel
 
     internal class AssetInfo
     {
+        public const string AutoEmptyTag = "auto";
+
         internal bool isScene { get; set; }
         internal bool isFolder { get; set; }
-        internal long fileSize;
 
-        internal long UfileSize;
-        internal Type assetType;
+        private long _fileSize = -1;
+        internal long fileSize
+        {
+            get
+            {
+                if (_fileSize == -1)
+                {
+                    //TODO - maybe there's a way to ask the AssetDatabase for this size info.
+                    var fileInfo = new FileInfo(m_AssetName);
+                    _fileSize = fileInfo.Exists ? fileInfo.Length : 0;
+                }
+                return _fileSize;
+            }
+        }
+
+        private long _UfileSize = 0;
+        internal long UfileSize
+        {
+            get
+            {
+                if (fileSize == 0) return 0;
+                if (_UfileSize != 0) return _UfileSize;
+                if (assetType == typeof(Texture2D))
+                {
+                    if (assetType == typeof(Texture2D))
+                    {
+                        var tempObj = AssetDatabase.LoadAssetAtPath<Texture2D>(m_AssetName);
+                        _UfileSize = tempObj.GetRawTextureData().LongLength;
+                        Resources.UnloadAsset(tempObj);
+                    }
+                    else
+                    {
+                        _UfileSize = 0;
+                    }
+                }
+                return _UfileSize;
+            }
+        }
+
+        private Type _assetType;
+        internal Type assetType
+        {
+            get
+            {
+                if (_assetType == null)
+                {
+                    _assetType = AssetDatabase.GetMainAssetTypeAtPath(m_AssetName);
+                }
+                return _assetType;
+            }
+        }
 
         private HashSet<string> m_Parents;
         private string m_AssetName;
@@ -103,19 +153,6 @@ namespace AssetBundleBrowser.AssetBundleModel
             {
                 m_AssetName = value;
                 m_DisplayName = Path.GetFileNameWithoutExtension(m_AssetName);
-
-                //TODO - maybe there's a way to ask the AssetDatabase for this size info.
-                System.IO.FileInfo fileInfo = new System.IO.FileInfo(m_AssetName);
-                if (fileInfo.Exists)
-                {
-                    assetType = AssetDatabase.GetMainAssetTypeAtPath(m_AssetName);
-                    fileSize = fileInfo.Length;
-                    UfileSize = assetType != typeof(Texture2D) ? 0 : AssetDatabase.LoadAssetAtPath<Texture2D>(m_AssetName).GetRawTextureData().LongLength;
-                }
-                else
-                {
-                    fileSize = 0;
-                }
             }
         }
         internal string displayName
@@ -123,11 +160,11 @@ namespace AssetBundleBrowser.AssetBundleModel
             get { return m_DisplayName; }
         }
         internal string bundleName
-        { get { return System.String.IsNullOrEmpty(m_BundleName) ? "auto" : m_BundleName; } }
+        { get { return string.IsNullOrEmpty(m_BundleName) ? AutoEmptyTag : m_BundleName; } }
 
         internal Color GetColor()
         {
-            if (System.String.IsNullOrEmpty(m_BundleName))
+            if (string.IsNullOrEmpty(m_BundleName))
                 return Model.k_LightGrey;
             else
                 return Color.white;
@@ -147,7 +184,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         }
         internal IEnumerable<MessageSystem.Message> GetMessages()
         {
-            List<MessageSystem.Message> messages = new List<MessageSystem.Message>();
+            var messages = new List<MessageSystem.Message>();
             if (IsMessageSet(MessageSystem.MessageFlag.SceneBundleConflict))
             {
                 var message = displayName + "\n";
@@ -165,25 +202,17 @@ namespace AssetBundleBrowser.AssetBundleModel
             }
             if (IsMessageSet(MessageSystem.MessageFlag.AssetsDuplicatedInMultBundles))
             {
-                var bundleNames = AssetBundleModel.Model.CheckDependencyTracker(this);
-                string message = displayName + "\n" + "Is auto-included in multiple bundles:\n";
-                foreach (var bundleName in bundleNames)
-                {
-                    message += bundleName + ", ";
-                }
-                message = message.Substring(0, message.Length - 2);//remove trailing comma.
+                var bundleNames = Model.CheckDependencyTracker(this);
+                string message = string.Format("{0}\nIs auto-included in multiple bundles: - [{1}]\n", displayName, bundleNames.Count());
+                message += string.Join(", ", bundleNames);
                 messages.Add(new MessageSystem.Message(message, MessageType.Warning));
             }
 
-            if (System.String.IsNullOrEmpty(m_BundleName) && m_Parents.Count > 0)
+            if (string.IsNullOrEmpty(m_BundleName) && m_Parents.Count > 0)
             {
                 //TODO - refine the parent list to only include those in the current asset list
                 var message = displayName + "\n" + "Is auto included in bundle(s) due to parent(s): \n";
-                foreach (var parent in m_Parents)
-                {
-                    message += parent + ", ";
-                }
-                message = message.Substring(0, message.Length - 2);//remove trailing comma.
+                message += string.Join(", ", m_Parents);
                 messages.Add(new MessageSystem.Message(message, MessageType.Info));
             }
 
@@ -235,28 +264,34 @@ namespace AssetBundleBrowser.AssetBundleModel
         List<AssetInfo> m_dependencies = null;
         internal List<AssetInfo> GetDependencies()
         {
+            if (m_dependencies != null) return m_dependencies;
+
+            m_dependencies = new List<AssetInfo>();
             //TODO - not sure this refreshes enough. need to build tests around that.
-            if (m_dependencies == null)
+            if (AssetDatabase.IsValidFolder(m_AssetName))
             {
-                m_dependencies = new List<AssetInfo>();
-                if (AssetDatabase.IsValidFolder(m_AssetName))
+                //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
+                //GatherFoldersAndFiles();
+            }
+            else
+            {
+                if (!MiscUtils.IsAtomAsset(m_AssetName))
                 {
-                    //if we have a folder, its dependencies were already pulled in through alternate means.  no need to GatherFoldersAndFiles
-                    //GatherFoldersAndFiles();
-                }
-                else
-                {
-                    foreach (var dep in AssetDatabase.GetDependencies(m_AssetName, true))
+                    //TODO - 是否需要递归？从简单测试的情况来看是不需要的;
+                    //var tempDeps = AssetDatabase.GetDependencies(m_AssetName, true);
+                    var tempDeps = AssetDatabase.GetDependencies(m_AssetName, false);
+                    m_dependencies.Capacity = tempDeps.Length > 1 ? tempDeps.Length - 1 : m_dependencies.Capacity;
+                    foreach (var dep in tempDeps)
                     {
-                        if (dep != m_AssetName)
-                        {
-                            var asset = Model.CreateAsset(dep, this);
-                            if (asset != null)
-                                m_dependencies.Add(asset);
-                        }
+                        if (dep == m_AssetName) continue;
+
+                        var asset = Model.CreateAsset(dep, this);
+                        if (asset != null)
+                            m_dependencies.Add(asset);
                     }
                 }
             }
+
             return m_dependencies;
         }
 

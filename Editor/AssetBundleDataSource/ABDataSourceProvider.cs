@@ -1,17 +1,19 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Collections.Generic;
 
 namespace AssetBundleBrowser.AssetBundleDataSource
 {
-    internal class ABDataSourceProviderUtility {
-
+    internal class ABDataSourceProviderUtility
+    {
         private static List<Type> s_customNodes;
 
-        internal static List<Type> CustomABDataSourceTypes {
-            get {
-                if(s_customNodes == null) {
+        internal static List<Type> CustomABDataSourceTypes
+        {
+            get
+            {
+                if (s_customNodes == null)
+                {
                     s_customNodes = BuildCustomABDataSourceList();
                 }
                 return s_customNodes;
@@ -42,7 +44,7 @@ namespace AssetBundleBrowser.AssetBundleDataSource
                             properList.Add(list[count]);
                     }
                 }
-                catch (System.Exception)
+                catch (Exception)
                 {
                     //assembly which raises exception on the GetTypes() call - ignore it
                 }

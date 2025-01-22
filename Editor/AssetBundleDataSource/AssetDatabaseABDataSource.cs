@@ -34,6 +34,17 @@ namespace AssetBundleBrowser.AssetBundleDataSource
             return AssetDatabase.GetAssetPathsFromAssetBundle(assetBundleName);
         }
 
+        public Type GetMainAssetTypeAtPath(string assetPath)
+        {
+            if (assetPath.EndsWith(".unity")) return typeof(SceneAsset);
+            if (assetPath.EndsWith(".prefab")) return typeof(GameObject);
+            if (assetPath.EndsWith(".shader")) return typeof(Shader);
+            if (assetPath.EndsWith(".mat")) return typeof(Material);
+            if (assetPath.EndsWith(".anim")) return typeof(AnimationClip);
+            if (assetPath.EndsWith(".renderTexture")) return typeof(RenderTexture);
+
+            return AssetDatabase.GetMainAssetTypeAtPath(assetPath);
+        }
         public string GetAssetBundleName(string assetPath) {
             var importer = AssetImporter.GetAtPath(assetPath);
             if (importer == null) {

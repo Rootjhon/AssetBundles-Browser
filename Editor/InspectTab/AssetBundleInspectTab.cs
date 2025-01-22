@@ -207,7 +207,7 @@ namespace AssetBundleBrowser
             m_Data.AddFolder(folderPath);
         }
 
-        private void ClearData()
+        internal void ClearData()
         {
             m_SingleInspector.SetBundle(null);
 
@@ -216,7 +216,11 @@ namespace AssetBundleBrowser
                 List<AssetBundleRecord> records = new List<AssetBundleRecord>(m_loadedAssetBundles.Values);
                 foreach (AssetBundleRecord record in records)
                 {
-                    record.bundle.Unload(true);
+                    try
+                    {
+                        record.bundle?.Unload(true);
+                    }
+                    catch (System.Exception) { }
                 }
 
                 m_loadedAssetBundles.Clear();
@@ -225,8 +229,8 @@ namespace AssetBundleBrowser
 
         internal void RefreshBundles()
         {
+            SetBundleItem(null);
             ClearData();
-
 
             if (m_Data.BundlePaths == null)
                 return;
@@ -445,17 +449,12 @@ namespace AssetBundleBrowser
         /// Unloads previously loaded bundles if necessary when dealing with variants.
         /// </summary>
         /// <returns>Returns the loaded bundle, null if it could not be loaded.</returns>
-        /// <param name="path">Path of bundle to get</param>
-        private AssetBundle LoadBundle(string path)
+        /// <param name="varPath">Path of bundle to get</param>
+        private AssetBundle LoadBundle(string varPath)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(varPath)) return null;
 
-            string extension = Path.GetExtension(path);
-
-            string bundleName = path.Substring(0, path.Length - extension.Length);
+            var bundleName = Path.HasExtension(varPath) ? Path.GetFileNameWithoutExtension(varPath) : Path.GetFileName(varPath);
 
             // Check if we have a record for this bundle
             AssetBundleRecord record = GetLoadedBundleRecordByName(bundleName);
@@ -463,7 +462,7 @@ namespace AssetBundleBrowser
             if (null != record)
             {
                 // Unload existing bundle if variant names differ, otherwise use existing bundle
-                if (!record.path.Equals(path))
+                if (!record.path.Equals(varPath))
                 {
                     UnloadBundle(bundleName);
                 }
@@ -476,13 +475,13 @@ namespace AssetBundleBrowser
             if (null == bundle)
             {
                 // Load the bundle
-                bundle = AssetBundle.LoadFromFile(path);
+                bundle = AssetBundle.LoadFromFile(varPath);
                 if (null == bundle)
                 {
                     return null;
                 }
 
-                m_loadedAssetBundles[bundleName] = new AssetBundleRecord(path, bundle);
+                m_loadedAssetBundles[bundleName] = new AssetBundleRecord(varPath, bundle);
 
                 // Load the bundle's assets
                 string[] assetNames = bundle.GetAllAssetNames();

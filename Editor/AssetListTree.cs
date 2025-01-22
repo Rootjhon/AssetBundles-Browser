@@ -1,9 +1,11 @@
 ﻿using UnityEditor;
 using UnityEngine;
+using System.Linq;
 using System.Collections.Generic;
 using UnityEditor.IMGUI.Controls;
-using System.Linq;
 //using System;
+
+using UObject = UnityEngine.Object;
 
 
 namespace AssetBundleBrowser
@@ -12,7 +14,7 @@ namespace AssetBundleBrowser
     {
         List<AssetBundleModel.BundleInfo> m_SourceBundles = new List<AssetBundleModel.BundleInfo>();
         AssetBundleManageTab m_Controller;
-        List<UnityEngine.Object> m_EmptyObjectList = new List<UnityEngine.Object>();
+        List<UObject> m_EmptyObjectList = new List<UObject>();
 
         internal static MultiColumnHeaderState CreateDefaultMultiColumnHeaderState()
         {
@@ -202,7 +204,7 @@ namespace AssetBundleBrowser
 
         public void SetSelection(List<string> paths)
         {
-            List<int> selected = new List<int>();
+            List<int> selected = new List<int>(paths.Count);
             AddIfInPaths(paths, selected, rootItem);
             SetSelection(selected);
         }
@@ -233,8 +235,8 @@ namespace AssetBundleBrowser
             if (selectedIds == null)
                 return;
 
-            List<Object> selectedObjects = new List<Object>();
-            List<AssetBundleModel.AssetInfo> selectedAssets = new List<AssetBundleModel.AssetInfo>();
+            var selectedObjects = new List<Object>();
+            var selectedAssets = new List<AssetBundleModel.AssetInfo>();
             foreach (var id in selectedIds)
             {
                 var assetItem = FindItem(id, rootItem) as AssetBundleModel.AssetTreeItem;
@@ -323,7 +325,8 @@ namespace AssetBundleBrowser
 
             if (data.isSceneBundle)
             {
-                foreach (var assetPath in DragAndDrop.paths)
+                var tempDragPaths = DragAndDrop.paths;
+                foreach (var assetPath in tempDragPaths)
                 {
                     if ((AssetDatabase.GetMainAssetTypeAtPath(assetPath) != typeof(SceneAsset)) &&
                         (!AssetDatabase.IsValidFolder(assetPath)))
@@ -332,7 +335,8 @@ namespace AssetBundleBrowser
             }
             else
             {
-                foreach (var assetPath in DragAndDrop.paths)
+                var tempDragPaths = DragAndDrop.paths;
+                foreach (var assetPath in tempDragPaths)
                 {
                     if (AssetDatabase.GetMainAssetTypeAtPath(assetPath) == typeof(SceneAsset))
                         return false;
@@ -350,8 +354,9 @@ namespace AssetBundleBrowser
                 return;
             }
 
-            List<AssetBundleModel.AssetTreeItem> selectedNodes = new List<AssetBundleModel.AssetTreeItem>();
-            foreach (var nodeID in GetSelection())
+            var tempSelects = GetSelection();
+            var selectedNodes = new List<AssetBundleModel.AssetTreeItem>(tempSelects.Count);
+            foreach (var nodeID in tempSelects)
             {
                 selectedNodes.Add(FindItem(nodeID, rootItem) as AssetBundleModel.AssetTreeItem);
             }
@@ -362,11 +367,12 @@ namespace AssetBundleBrowser
 
                 menu.AddItem(new GUIContent("Remove asset(s) from bundle."), false, RemoveAssets, selectedNodes);
 
-                var tempDic = new Dictionary<string, int>();
-                foreach (var item in rootItem.children)
+                var tempChild = rootItem.children;
+                var tempDic = new Dictionary<string, int>(tempChild.Count);
+                foreach (var item in tempChild)
                 {
                     var tempATI = item as AssetBundleModel.AssetTreeItem;
-                    if (!string.IsNullOrEmpty(tempATI.asset.bundleName) && tempATI.asset.bundleName != "auto")
+                    if (!string.IsNullOrEmpty(tempATI.asset.bundleName) && tempATI.asset.bundleName != AssetBundleModel.AssetInfo.AutoEmptyTag)
                     {
                         if (!tempDic.ContainsKey(tempATI.asset.bundleName))
                             tempDic.Add(tempATI.asset.bundleName, 1);
@@ -380,13 +386,13 @@ namespace AssetBundleBrowser
                 }
                 else if (tempDic.Count > 1)
                 {
-                    foreach (var item in tempDic.Keys)
+                    var tempDicKeys = tempDic.Keys;
+                    foreach (var item in tempDicKeys)
                     {
                         menu.AddItem(new GUIContent("Add asset(s) to bundle./" + item), false, AddAssets, new object[] { selectedNodes, item });
                         menu.AddItem(new GUIContent("Find References In Scene/" + item), false, FindReferencesInScene);
                     }
                 }
-
 
                 menu.ShowAsContext();
             }
@@ -395,11 +401,11 @@ namespace AssetBundleBrowser
         void RemoveAssets(object obj)
         {
             var selectedNodes = obj as List<AssetBundleModel.AssetTreeItem>;
-            var assets = new List<AssetBundleModel.AssetInfo>();
+            var assets = new List<AssetBundleModel.AssetInfo>(selectedNodes.Count);
             //var bundles = new List<AssetBundleModel.BundleInfo>();
             foreach (var node in selectedNodes)
             {
-                if (!System.String.IsNullOrEmpty(node.asset.bundleName))
+                if (!string.IsNullOrEmpty(node.asset.bundleName))
                     assets.Add(node.asset);
             }
             AssetBundleModel.Model.MoveAssetToBundle(assets, string.Empty, string.Empty);
@@ -414,14 +420,14 @@ namespace AssetBundleBrowser
 
         void AddAssets(object varObj)
         {
-            object[] tempResult = varObj as object[];
+            var tempResult = varObj as object[];
             var selectedNodes = tempResult[0] as List<AssetBundleModel.AssetTreeItem>;
-            string tempBundlename = tempResult[1] as string;
+            var tempBundlename = tempResult[1] as string;
 
             var assets = new List<AssetBundleModel.AssetInfo>();
             foreach (var node in selectedNodes)
             {
-                if (!System.String.IsNullOrEmpty(node.asset.bundleName))
+                if (!string.IsNullOrEmpty(node.asset.bundleName))
                     assets.Add(node.asset);
             }
             AssetBundleModel.Model.MoveAssetToBundle(assets, tempBundlename, string.Empty);
@@ -466,8 +472,9 @@ namespace AssetBundleBrowser
             SortByColumn();
 
             rows.Clear();
-            for (int i = 0; i < root.children.Count; i++)
-                rows.Add(root.children[i]);
+            var tempChild = root.children;
+            for (int i = 0; i < tempChild.Count; i++)
+                rows.Add(tempChild[i]);
 
             Repaint();
         }
@@ -478,8 +485,9 @@ namespace AssetBundleBrowser
             if (sortedColumns.Length == 0)
                 return;
 
-            List<AssetBundleModel.AssetTreeItem> assetList = new List<AssetBundleModel.AssetTreeItem>();
-            foreach (var item in rootItem.children)
+            var tempChilds = rootItem.children;
+            var assetList = new List<AssetBundleModel.AssetTreeItem>(tempChilds.Count);
+            foreach (var item in tempChilds)
             {
                 assetList.Add(item as AssetBundleModel.AssetTreeItem);
             }
@@ -497,7 +505,11 @@ namespace AssetBundleBrowser
                 case SortOption.Asset:
                     return myTypes.Order(l => l.displayName, ascending);
                 case SortOption.AssetType:
-                    return myTypes.Order(l => l.asset.assetType.ToString().Substring(l.asset.assetType.ToString().LastIndexOf('.') + 1), ascending);
+                    return myTypes.Order(l =>
+                    {
+                        var tempAstTypeStr = l.asset.assetType.ToString();
+                        return tempAstTypeStr.Substring(tempAstTypeStr.LastIndexOf('.') + 1);
+                    }, ascending);
                 case SortOption.Size:
                     return myTypes.Order(l => l.asset.fileSize, ascending);
                 case SortOption.USize:

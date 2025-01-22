@@ -118,7 +118,6 @@ namespace AssetBundleBrowser
                     MultiColumnHeaderState.OverwriteSerializedFields(m_AssetListMCHState, headerState);
                 m_AssetListMCHState = headerState;
 
-
                 m_AssetList = new AssetListTree(m_AssetListState, m_AssetListMCHState, this);
                 m_AssetList.Reload();
                 m_MessageList = new MessageList();

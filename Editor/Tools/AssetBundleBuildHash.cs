@@ -99,10 +99,6 @@ namespace AssetBundleBrowser.Utils
                 var graphicsAPIMask = GetGraphicsAPIsMaskForPlatform(BuildTarget.WebGL);
                 return (tex & 0x3F) | ((graphicsAPIMask & 0xFFFFFF) << 8);
             }
-            if (varTarget == BuildTarget.WSAPlayer)
-            {
-                return (int)EditorUserBuildSettings.wsaSubtarget;
-            }
             return 0;
         }
         private static int GetGraphicsAPIsMaskForPlatform(BuildTarget varBuildTarget)

@@ -121,42 +121,85 @@ namespace AssetBundleBrowser
             if (advancedFoldout)
             {
                 EditorGUI.indentLevel++;
+
                 base.OnInspectorGUI();
+                {
+                    //EditorGUI.BeginChangeCheck();
+                    //serializedObject.UpdateIfRequiredOrScript();
+
+                    //// Loop through properties and create one field (including children) for each top level property.
+                    //SerializedProperty property = serializedObject.GetIterator();
+                    //bool expanded = true;
+                    //while (property.NextVisible(expanded))
+                    //{
+                    //    using (new EditorGUI.DisabledScope("m_Script" == property.propertyPath))
+                    //    {
+                    //        EditorGUILayout.PropertyField(property, true);
+                    //    }
+                    //    expanded = false;
+                    //    break;
+                    //}
+
+                    //serializedObject.ApplyModifiedProperties();
+                    //EditorGUI.EndChangeCheck();
+                }
+                
                 EditorGUI.indentLevel--;
             }
 
             EditorGUILayout.Space();
 
-            //if (GUILayout.Button("ExportAssets"))
-            //{
-            //    var tempAssets = bundle.LoadAllAssets();
-            //    Debug.LogError(tempAssets.Length);
-            //    foreach (var item in tempAssets)
-            //    {
-            //        Debug.LogError(item.GetType());
-            //        if (item.GetType() == typeof(GameObject))
-            //        {
-            //            GameObject.Instantiate(item);
-            //        }
-            //        if (item.GetType() == typeof(Texture2D))
-            //        {
-            //            var tempTex = item as Texture2D;
-            //            var temp = new Texture2D(tempTex.width, tempTex.height, tempTex.format, tempTex.mipmapCount != 0);
-            //            Graphics.CopyTexture(tempTex, temp);
+            if (GUILayout.Button("ExportAssets"))
+            {
+                var tempAssets = bundle.LoadAllAssets();
 
-            //            var tempD = new Texture2D(tempTex.width, tempTex.height, tempTex.format, true);
-            //            for (int i = 0; i < temp.width; i++)
-            //            {
-            //                for (int j = 0; j < temp.height; j++)
-            //                {
-            //                    tempD.SetPixel(i, j, temp.GetPixel(i, j));
-            //                }
-            //            }
+                var tempBundleObj = new SerializedObject(bundle);
+                //var tempBinFormat = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                //using (var tempF = File.Open(Path.Combine(Application.dataPath, "test.bin"), FileMode.Create))
+                //{
+                //    tempBinFormat.Serialize(tempF, tempBundleObj);
+                //}
 
-            //            File.WriteAllBytes("Assets/MyMaterial.png", tempD.EncodeToPNG());
-            //        }
-            //    }
-            //}
+                var property = tempBundleObj.GetIterator();
+                var expanded = true;
+                while (property.NextVisible(expanded))
+                {
+                    using (new EditorGUI.DisabledScope("m_Script" == property.propertyPath))
+                    {
+                        Debug.LogError(property.propertyType);
+                    }
+                    expanded = false;
+                }
+
+                Debug.LogError(tempAssets.Length);
+                foreach (var item in tempAssets)
+                {
+                    Debug.LogError(item.GetType());
+                    var tempSerObj = new SerializedObject(item);
+                    Debug.LogError(tempSerObj.GetType());
+                    //if (item.GetType() == typeof(GameObject))
+                    //{
+                    //    GameObject.Instantiate(item);
+                    //}
+                    //if (item.GetType() == typeof(Texture2D))
+                    //{
+                    //    var tempTex = item as Texture2D;
+                    //    var temp = new Texture2D(tempTex.width, tempTex.height, tempTex.format, tempTex.mipmapCount != 0);
+                    //    Graphics.CopyTexture(tempTex, temp);
+
+                    //    var tempD = new Texture2D(tempTex.width, tempTex.height, tempTex.format, true);
+                    //    for (int i = 0; i < temp.width; i++)
+                    //    {
+                    //        for (int j = 0; j < temp.height; j++)
+                    //        {
+                    //            tempD.SetPixel(i, j, temp.GetPixel(i, j));
+                    //        }
+                    //    }
+
+                    //    File.WriteAllBytes("Assets/MyMaterial.png", tempD.EncodeToPNG());
+                    //}
+                }
+            }
         }
     }
 }

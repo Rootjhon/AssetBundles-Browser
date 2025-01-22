@@ -4,41 +4,42 @@ using System.Collections.Generic;
 
 namespace AssetBundleBrowser
 {
-    internal class MessageList
+    internal sealed class MessageList
     {
+        #region [Fields]
+        private const float k_BorderSize = 1f;
+        private const float k_ScrollbarPadding = 16f;
+
         private Vector2 m_ScrollPosition = Vector2.zero;
+        private Vector2 m_Dimensions = Vector2.zero;
 
         private GUIStyle[] m_Style = new GUIStyle[2];
 
-        IEnumerable<AssetBundleModel.AssetInfo> m_Selecteditems;
-        List<MessageSystem.Message> m_Messages;
+        private List<MessageSystem.Message> m_Messages;
+        private IEnumerable<AssetBundleModel.AssetInfo> m_Selecteditems;
+        #endregion
 
-        Vector2 m_Dimensions = new Vector2(0, 0);
-        const float k_ScrollbarPadding = 16f;
-        const float k_BorderSize = 1f;
-
-
+        #region [Construct]
         internal MessageList()
         {
-            Init();
-        }
-        private void Init()
-        {
-            m_Style[0] = "OL EntryBackOdd";
-            m_Style[1] = "OL EntryBackEven";
-            m_Style[0].wordWrap = true;
-            m_Style[1].wordWrap = true;
-            m_Style[0].padding = new RectOffset(32, 0, 1, 4);
-            m_Style[1].padding = new RectOffset(32, 0, 1, 4);
             m_Messages = new List<MessageSystem.Message>();
 
+            m_Style[0] = "OL EntryBackOdd";
+            m_Style[0].wordWrap = true;
+            m_Style[0].padding = new RectOffset(32, 0, 1, 4);
+
+            m_Style[1] = "OL EntryBackEven";
+            m_Style[1].wordWrap = true;
+            m_Style[1].padding = new RectOffset(32, 0, 1, 4);
         }
+        #endregion
+
+        #region [API]
         internal void OnGUI(Rect fullPos)
         {
             DrawOutline(fullPos, 1f);
 
-            Rect pos = new Rect(fullPos.x + k_BorderSize, fullPos.y + k_BorderSize, fullPos.width - 2 * k_BorderSize, fullPos.height - 2 * k_BorderSize);
-            
+            var pos = new Rect(fullPos.x + k_BorderSize, fullPos.y + k_BorderSize, fullPos.width - 2 * k_BorderSize, fullPos.height - 2 * k_BorderSize);
 
             if (m_Dimensions.y == 0 || m_Dimensions.x != pos.width - k_ScrollbarPadding)
             {
@@ -54,7 +55,7 @@ namespace AssetBundleBrowser
             m_ScrollPosition = GUI.BeginScrollView(pos, m_ScrollPosition, new Rect(0, 0, m_Dimensions.x, m_Dimensions.y));
             int counter = 0;
             float runningHeight = 0.0f;
-            foreach (var message in m_Messages) 
+            foreach (var message in m_Messages)
             {
                 int index = counter % 2;
                 var content = new GUIContent(message.message);
@@ -70,18 +71,16 @@ namespace AssetBundleBrowser
             }
             GUI.EndScrollView();
         }
-
         internal void SetItems(IEnumerable<AssetBundleModel.AssetInfo> items)
         {
             m_Selecteditems = items;
             CollectMessages();
         }
-
         internal void CollectMessages()
         {
             m_Messages.Clear();
             m_Dimensions.y = 0f;
-            if(m_Selecteditems != null)
+            if (m_Selecteditems != null)
             {
                 foreach (var asset in m_Selecteditems)
                 {
@@ -92,25 +91,27 @@ namespace AssetBundleBrowser
 
         internal static void DrawOutline(Rect rect, float size)
         {
-            Color color = new Color(0.6f, 0.6f, 0.6f, 1.333f);
-            if(EditorGUIUtility.isProSkin)
+            if (Event.current.type != EventType.Repaint) return;
+
+            var color = new Color(0.6f, 0.6f, 0.6f, 1.333f);
+            if (EditorGUIUtility.isProSkin)
             {
                 color.r = 0.12f;
                 color.g = 0.12f;
                 color.b = 0.12f;
             }
 
-            if (Event.current.type != EventType.Repaint)
-                return;
-
-            Color orgColor = GUI.color;
+            var orgColor = GUI.color;
             GUI.color = GUI.color * color;
-            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, size), EditorGUIUtility.whiteTexture);
-            GUI.DrawTexture(new Rect(rect.x, rect.yMax - size, rect.width, size), EditorGUIUtility.whiteTexture);
-            GUI.DrawTexture(new Rect(rect.x, rect.y + 1, size, rect.height - 2 * size), EditorGUIUtility.whiteTexture);
-            GUI.DrawTexture(new Rect(rect.xMax - size, rect.y + 1, size, rect.height - 2 * size), EditorGUIUtility.whiteTexture);
+
+            var tempWhiteTex = EditorGUIUtility.whiteTexture;
+            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width, size), tempWhiteTex);
+            GUI.DrawTexture(new Rect(rect.x, rect.yMax - size, rect.width, size), tempWhiteTex);
+            GUI.DrawTexture(new Rect(rect.x, rect.y + 1, size, rect.height - 2 * size), tempWhiteTex);
+            GUI.DrawTexture(new Rect(rect.xMax - size, rect.y + 1, size, rect.height - 2 * size), tempWhiteTex);
 
             GUI.color = orgColor;
         }
+        #endregion   
     }
 }

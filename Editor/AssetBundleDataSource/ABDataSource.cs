@@ -75,6 +75,12 @@ namespace AssetBundleBrowser.AssetBundleDataSource
         /// </summary>
         string[] GetAssetPathsFromAssetBundle (string assetBundleName);
         /// <summary>
+        /// Returns the type of the main asset object at assetPath.
+        /// </summary>
+        /// <param name="assetPath"></param>
+        /// <returns></returns>
+        Type GetMainAssetTypeAtPath(string assetPath);
+        /// <summary>
         /// Name of bundle explicitly associated with asset at path.  
         /// </summary>
         string GetAssetBundleName(string assetPath);
