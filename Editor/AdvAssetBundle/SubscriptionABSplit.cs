@@ -74,7 +74,7 @@ namespace AssetBundleBrowser.AdvAssetBundle
             return temPS;
         }
 
-        [MenuItem("SubscriptionABSplitAttribute/examples")]
+        //[MenuItem("SubscriptionABSplitAttribute/examples")]
         public static void examples()
         {
             {
@@ -90,11 +90,11 @@ namespace AssetBundleBrowser.AdvAssetBundle
                     Debug.LogError($"[{item}] {string.Join(";", tempS)}");
                     tempBuilList.Add(tempBuild);
                 }
-                var tempManifest = BuildPipeline.BuildAssetBundles("AssetBundles/Android_1", tempBuilList.ToArray(), BuildAssetBundleOptions.None, BuildTarget.Android);
+                var tempManifest = BuildPipeline.BuildAssetBundles(string.Format("AssetBundles/{0}_1", EditorUserBuildSettings.activeBuildTarget), tempBuilList.ToArray(), BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
             }
 
             {
-                var buildManifest = BuildPipeline.BuildAssetBundles("AssetBundles/Android", BuildAssetBundleOptions.None, BuildTarget.Android);
+                var buildManifest = BuildPipeline.BuildAssetBundles(string.Format("AssetBundles/{0}", EditorUserBuildSettings.activeBuildTarget), BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
             }
 
             {

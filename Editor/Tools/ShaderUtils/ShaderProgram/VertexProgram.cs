@@ -55,11 +55,11 @@ namespace AssetBundleBrowser.Utils
         #endregion
 
         #region [API]
-        [UnityEditor.MenuItem("AAAAAA/SSSSS")]
-        public static void TestFun()
-        {
+        //[UnityEditor.MenuItem("AAAAAA/SSSSS")]
+        //public static void TestFun()
+        //{
 
-        }
+        //}
 
         #endregion
 

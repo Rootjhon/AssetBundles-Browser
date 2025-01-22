@@ -12,7 +12,7 @@ namespace AssetBundleBrowser.ExtractAssets
 {
     public class AssetBundleArchive
     {
-        [MenuItem("ExtractAssets/Test")]
+        //[MenuItem("ExtractAssets/Test")]
         public static void ExtractAssets()
         {
             var tempFilePath = EditorUtility.OpenFilePanel("ExtractAssets", Path.Combine(Application.dataPath, "../"), "*");
@@ -20,7 +20,7 @@ namespace AssetBundleBrowser.ExtractAssets
             TestABFile(tempFilePath);
         }
 
-        [MenuItem("ExtractAssets/QuickTest")]
+        //[MenuItem("ExtractAssets/QuickTest")]
         public static void Quick_ExtractAssets()
         {
             TestABFile(Path.Combine(Application.streamingAssetsPath, "quardandtriangle-prefab"));
