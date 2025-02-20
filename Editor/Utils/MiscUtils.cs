@@ -147,7 +147,7 @@ namespace AssetBundleBrowser
             _creditsStyle.fontStyle = FontStyle.Italic;
             _creditsStyle.alignment = TextAnchor.MiddleCenter;
             _creditsStyle.normal.textColor = new Color(0, 0, 0, 0.5f);
-            GUI.Label(new Rect(15, varPosition.height - 20, varPosition.width, 20), string.Format("by 354888562@qq.com update:{0}", varTimestamp), _creditsStyle);
+            GUI.Label(new Rect(15, varPosition.height - 20, varPosition.width, 20), string.Format("by junqiang@qq.com update:{0}", varTimestamp), _creditsStyle);
         }
         #endregion
     }

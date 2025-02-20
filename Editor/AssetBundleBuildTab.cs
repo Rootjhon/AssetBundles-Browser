@@ -322,7 +322,7 @@ namespace AssetBundleBrowser
             GUILayout.EndVertical();
             EditorGUILayout.EndScrollView();
 
-            MiscUtils.GUISignWithTimestamp(pos, "2020/12/16");
+            MiscUtils.GUISignWithTimestamp(pos, "2025/02/06");
         }
 
         private void ExecuteBuild()
