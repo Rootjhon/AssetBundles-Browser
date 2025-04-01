@@ -290,7 +290,12 @@ namespace AssetBundleBrowser.Utils
                     }
                     else
                     {
-                        inoutUsage.m_SubtractiveUsed |= LightmapEditorSettings.mixedBakeMode == MixedLightingMode.Subtractive;
+                        inoutUsage.m_SubtractiveUsed = false;
+
+                        if (Lightmapping.TryGetLightingSettings(out LightingSettings tempSettings))
+                        {
+                            inoutUsage.m_SubtractiveUsed |= tempSettings.mixedBakeMode == MixedLightingMode.Subtractive;
+                        }
                     }
                 }
                 else
