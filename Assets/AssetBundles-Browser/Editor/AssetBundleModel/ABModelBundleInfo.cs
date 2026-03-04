@@ -516,7 +516,7 @@ namespace AssetBundleBrowser.AssetBundleModel
         private AssetType AnalysisAssetType(Type varType)
         {
             var tempType = AssetType.DefaultType;
-            AssetTypeMap.TryGetValue(varType, out tempType);
+            if(varType != null) AssetTypeMap.TryGetValue(varType, out tempType);
             return tempType;
         }
         internal override void AddAssetsToNode(AssetTreeItem node)
